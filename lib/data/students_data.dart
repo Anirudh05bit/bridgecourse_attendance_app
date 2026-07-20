@@ -3,6 +3,7 @@
 import '../models/student.dart';
 
 final List<Student> registeredStudents = [
+  Student(id: 'AM.SC.U4CSE26128', name: 'Nakshatra G ', rollNumber: 'AM.SC.U4CSE26128'),
   Student(id: 'AM.SC.U4AIE26108', name: 'Adyakiran A', rollNumber: 'AM.SC.U4AIE26108'),
   Student(id: 'AM.SC.U4AID26021', name: 'kaku sai vikranth reddy', rollNumber: 'AM.SC.U4AID26021'),
   Student(id: 'AM.EN.U4EEE26052', name: 'Yuva Raja C P', rollNumber: 'AM.EN.U4EEE26052'),
