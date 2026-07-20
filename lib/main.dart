@@ -75,11 +75,12 @@ class RootPage extends StatefulWidget {
 
 class _RootPageState extends State<RootPage> {
   int _index = 0;
+  final _markAttendanceKey = GlobalKey<MarkAttendancePageState>();
 
-  final _pages = const [
-    MarkAttendancePage(),
-    UploadPage(),
-    ViewAttendancePage(),
+  late final _pages = [
+    MarkAttendancePage(key: _markAttendanceKey),
+    const UploadPage(),
+    const ViewAttendancePage(),
   ];
 
   @override
@@ -88,7 +89,14 @@ class _RootPageState extends State<RootPage> {
       body: IndexedStack(index: _index, children: _pages),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
-        onDestinationSelected: (i) => setState(() => _index = i),
+        onDestinationSelected: (i) {
+          setState(() => _index = i);
+          // Refresh the Mark Attendance list whenever we switch to it, so
+          // students added on the Add Student page show up immediately.
+          if (i == 0) {
+            _markAttendanceKey.currentState?.reload();
+          }
+        },
         destinations: const [
           NavigationDestination(icon: Icon(Icons.check_circle_outline), label: 'Mark'),
           NavigationDestination(icon: Icon(Icons.upload_file), label: 'Add'),

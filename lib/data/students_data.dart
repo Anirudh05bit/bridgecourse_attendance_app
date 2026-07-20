@@ -9,7 +9,7 @@ final List<Student> registeredStudents = [
   Student(id: 'AM.SC.U4CYS26029', name: 'Karthika Sukumaran', rollNumber: 'AM.SC.U4CYS26029'),
   Student(id: 'AM.SC.U4CYS26026', name: 'Heleny Ann Shelgy', rollNumber: 'AM.SC.U4CYS26026'),
   Student(id: 'AM.SC.U4CSE26003', name: 'Aditi Yadav', rollNumber: 'AM.SC.U4CSE26003'),
-  Student(id: 'AM.SC.U4CSE26034', name: 'RISHIL KUMAAR A', rollNumber: 'AM.SC.U4CSE26034'),
+  Student(id: 'AM.SC.U4CSE26034', name: 'RUSHIL KUMAAR A', rollNumber: 'AM.SC.U4CSE26034'),
   Student(id: 'AM.SC.U4CSE26349', name: 'TharunVikraman P.V', rollNumber: 'AM.SC.U4CSE26349'),
   Student(id: 'AM.SC.U4CSE26332', name: 'Rohit Padmakumar', rollNumber: 'AM.SC.U4CSE26332'),
   Student(id: 'AM.EN.U4CQC26030', name: 'Mayukh Dev', rollNumber: 'AM.EN.U4CQC26030'),

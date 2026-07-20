@@ -54,7 +54,7 @@ class _UploadPageState extends State<UploadPage> {
             const SizedBox(height: 8),
             TextField(
               controller: _rollController,
-              decoration: const InputDecoration(hintText: 'Roll number (optional)', border: OutlineInputBorder()),
+              decoration: const InputDecoration(hintText: 'Roll number', border: OutlineInputBorder()),
             ),
             const SizedBox(height: 12),
             FilledButton(

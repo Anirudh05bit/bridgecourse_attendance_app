@@ -7,10 +7,10 @@ class MarkAttendancePage extends StatefulWidget {
   const MarkAttendancePage({super.key});
 
   @override
-  State<MarkAttendancePage> createState() => _MarkAttendancePageState();
+  State<MarkAttendancePage> createState() => MarkAttendancePageState();
 }
 
-class _MarkAttendancePageState extends State<MarkAttendancePage> {
+class MarkAttendancePageState extends State<MarkAttendancePage> {
   final _store = AttendanceStore();
   final _searchController = TextEditingController();
 
@@ -35,6 +35,10 @@ class _MarkAttendancePageState extends State<MarkAttendancePage> {
     _searchController.addListener(_applyFilter);
     _load();
   }
+
+  /// Public entry point so other pages (e.g. RootPage) can force a refresh,
+  /// for example after a new student is added on the Add Student page.
+  Future<void> reload() => _load();
 
   Future<void> _load() async {
     setState(() => _loading = true);
@@ -96,7 +100,16 @@ class _MarkAttendancePageState extends State<MarkAttendancePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Mark Attendance')),
+      appBar: AppBar(
+        title: const Text('Mark Attendance'),
+        actions: [
+          TextButton.icon(
+            onPressed: _loading ? null : _confirmNoClass,
+            icon: const Icon(Icons.event_busy, color: Colors.white),
+            label: const Text('No Class', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
       body: Column(
         children: [
           SizedBox(
