@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/student.dart';
-import '../services/attendance_service.dart';
+import '../services/csv_export_service.dart';
+import '../services/attendance_store.dart';
 
 class ViewAttendancePage extends StatefulWidget {
   const ViewAttendancePage({super.key});
@@ -11,7 +12,7 @@ class ViewAttendancePage extends StatefulWidget {
 }
 
 class _ViewAttendancePageState extends State<ViewAttendancePage> {
-  final _service = AttendanceService();
+  final _store = AttendanceStore();
   static final _startDate = DateTime(2026, 7, 20);
   static final _endDate = DateTime(2026, 8, 13);
 
@@ -30,19 +31,51 @@ class _ViewAttendancePageState extends State<ViewAttendancePage> {
       _selectedDate = date;
       _loading = true;
     });
-    final students = await _service.fetchStudents();
-    final presentIds = await _service.fetchPresentStudentIds(date);
+    final students = await _store.fetchStudents();
+    final presentIds = await _store.fetchPresentIds(date);
     setState(() {
       _present = students.where((s) => presentIds.contains(s.id)).toList();
       _absent = students.where((s) => !presentIds.contains(s.id)).toList();
       _loading = false;
     });
   }
+  final _exportService = CsvExportService();
+  bool _exporting = false;
+
+  Future<void> _exportCsv() async {
+    setState(() => _exporting = true);
+    try {
+      final students = await _store.fetchStudents();
+      final attendance = await _store.fetchAllAttendance();
+      final csv = _exportService.buildSummaryCsv(students, attendance);
+      await _exportService.exportAndShare(csv);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Export failed: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _exporting = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('View Attendance')),
+      appBar: AppBar(
+        title: const Text('View Attendance'),
+        actions: [
+          IconButton(
+            onPressed: _exporting ? null : _exportCsv,
+            icon: _exporting
+                ? const SizedBox(
+                    height: 20, width: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  )
+                : const Icon(Icons.ios_share),
+            tooltip: 'Export attendance CSV',
+          ),
+        ],
+      ),
       body: Column(
         children: [
           SizedBox(
@@ -70,10 +103,7 @@ class _ViewAttendancePageState extends State<ViewAttendancePage> {
                     child: Text(
                       DateFormat('d\nMMM').format(d),
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: selected ? Colors.white : Colors.black87,
-                        fontSize: 12,
-                      ),
+                      style: TextStyle(color: selected ? Colors.white : Colors.black87, fontSize: 12),
                     ),
                   ),
                 );
@@ -99,11 +129,13 @@ class _ViewAttendancePageState extends State<ViewAttendancePage> {
                           ..._present.map((s) => ListTile(
                                 leading: const Icon(Icons.check_circle, color: Colors.green),
                                 title: Text(s.name),
+                                subtitle: s.rollNumber != null && s.rollNumber!.isNotEmpty ? Text(s.rollNumber!) : null,
                               )),
                           _SectionHeader(title: 'Absent (${_absent.length})', color: Colors.red),
                           ..._absent.map((s) => ListTile(
                                 leading: const Icon(Icons.cancel, color: Colors.red),
                                 title: Text(s.name),
+                                subtitle: s.rollNumber != null && s.rollNumber!.isNotEmpty ? Text(s.rollNumber!) : null,
                               )),
                         ],
                       ),
@@ -113,8 +145,7 @@ class _ViewAttendancePageState extends State<ViewAttendancePage> {
     );
   }
 
-  bool _isSameDay(DateTime a, DateTime b) =>
-      a.year == b.year && a.month == b.month && a.day == b.day;
+  bool _isSameDay(DateTime a, DateTime b) => a.year == b.year && a.month == b.month && a.day == b.day;
 }
 
 class _SectionHeader extends StatelessWidget {

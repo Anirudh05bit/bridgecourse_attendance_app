@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'pages/mark_attendance_page.dart';
 import 'pages/upload_page.dart';
 import 'pages/view_attendance_page.dart';
 
-const supabaseUrl = 'https://vgegfwoxgodrqejxhccg.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZnZWdmd294Z29kcnFlanhoY2NnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ0NTEzNzQsImV4cCI6MjEwMDAyNzM3NH0.qjch1M_SIzSm3zWzLURQlz9V6a8dgaLjjWpWpyEx-Ss';
+const _darkRed = Color(0xFF8B0000);
 
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
+void main() {
   runApp(const AttendanceApp());
 }
 
@@ -20,7 +16,51 @@ class AttendanceApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Attendance',
-      theme: ThemeData(colorSchemeSeed: Colors.indigo, useMaterial3: true),
+      theme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: _darkRed,
+          brightness: Brightness.light,
+        ).copyWith(primary: _darkRed, onPrimary: Colors.white, surface: Colors.white),
+        scaffoldBackgroundColor: Colors.white,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: _darkRed,
+          foregroundColor: Colors.white,
+          elevation: 0,
+        ),
+        navigationBarTheme: NavigationBarThemeData(
+          backgroundColor: Colors.white,
+          indicatorColor: _darkRed.withOpacity(0.15),
+          labelTextStyle: WidgetStateProperty.resolveWith((states) {
+            final selected = states.contains(WidgetState.selected);
+            return TextStyle(color: selected ? _darkRed : Colors.black54, fontWeight: selected ? FontWeight.bold : FontWeight.normal, fontSize: 12);
+          }),
+          iconTheme: WidgetStateProperty.resolveWith((states) {
+            final selected = states.contains(WidgetState.selected);
+            return IconThemeData(color: selected ? _darkRed : Colors.black54);
+          }),
+        ),
+        filledButtonTheme: FilledButtonThemeData(
+          style: FilledButton.styleFrom(backgroundColor: _darkRed, foregroundColor: Colors.white),
+        ),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(foregroundColor: _darkRed, side: const BorderSide(color: _darkRed)),
+        ),
+        chipTheme: ChipThemeData(
+          backgroundColor: Colors.grey.shade100,
+          selectedColor: _darkRed,
+          labelStyle: const TextStyle(color: Colors.black87),
+          secondaryLabelStyle: const TextStyle(color: Colors.white),
+          side: BorderSide(color: Colors.grey.shade300),
+        ),
+        textSelectionTheme: const TextSelectionThemeData(cursorColor: _darkRed),
+        inputDecorationTheme: InputDecorationTheme(
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: _darkRed, width: 2),
+          ),
+        ),
+      ),
       home: const RootPage(),
     );
   }
@@ -51,7 +91,7 @@ class _RootPageState extends State<RootPage> {
         onDestinationSelected: (i) => setState(() => _index = i),
         destinations: const [
           NavigationDestination(icon: Icon(Icons.check_circle_outline), label: 'Mark'),
-          NavigationDestination(icon: Icon(Icons.upload_file), label: 'Upload'),
+          NavigationDestination(icon: Icon(Icons.upload_file), label: 'Add'),
           NavigationDestination(icon: Icon(Icons.calendar_month), label: 'View'),
         ],
       ),

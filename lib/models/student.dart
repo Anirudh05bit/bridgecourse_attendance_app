@@ -1,10 +1,7 @@
 class Student {
   final String id;
   final String name;
+  final String? rollNumber;
 
-  Student({required this.id, required this.name});
-
-  factory Student.fromMap(Map<String, dynamic> map) {
-    return Student(id: map['id'] as String, name: map['name'] as String);
-  }
+  const Student({required this.id, required this.name, this.rollNumber});
 }

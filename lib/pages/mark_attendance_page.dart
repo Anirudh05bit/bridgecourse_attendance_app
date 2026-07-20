@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/student.dart';
-import '../services/attendance_service.dart';
+import '../services/attendance_store.dart';
 
 class MarkAttendancePage extends StatefulWidget {
   const MarkAttendancePage({super.key});
@@ -11,11 +11,12 @@ class MarkAttendancePage extends StatefulWidget {
 }
 
 class _MarkAttendancePageState extends State<MarkAttendancePage> {
-  final _service = AttendanceService();
+  final _store = AttendanceStore();
   final _searchController = TextEditingController();
 
   static final _startDate = DateTime(2026, 7, 20);
   static final _endDate = DateTime(2026, 8, 13);
+  
 
   late DateTime _selectedDate;
   List<Student> _allStudents = [];
@@ -37,8 +38,8 @@ class _MarkAttendancePageState extends State<MarkAttendancePage> {
 
   Future<void> _load() async {
     setState(() => _loading = true);
-    final students = await _service.fetchStudents();
-    final present = await _service.fetchPresentStudentIds(_selectedDate);
+    final students = await _store.fetchStudents();
+    final present = await _store.fetchPresentIds(_selectedDate);
     setState(() {
       _allStudents = students;
       _presentIds = present;
@@ -46,13 +47,36 @@ class _MarkAttendancePageState extends State<MarkAttendancePage> {
     });
     _applyFilter();
   }
+  Future<void> _confirmNoClass() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('No Class?'),
+        content: Text(
+          'Mark all ${_allStudents.length} students present for '
+          '${DateFormat('MMM d, y').format(_selectedDate)}?',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Mark all present')),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+    await _store.markAllPresent(_allStudents.map((s) => s.id).toList(), _selectedDate);
+    await _load();
+  }
 
   void _applyFilter() {
     final q = _searchController.text.trim().toLowerCase();
     setState(() {
       _filtered = q.isEmpty
           ? _allStudents
-          : _allStudents.where((s) => s.name.toLowerCase().contains(q)).toList();
+          : _allStudents.where((s) {
+              final nameMatch = s.name.toLowerCase().contains(q);
+              final rollMatch = s.rollNumber?.toLowerCase().contains(q) ?? false;
+              return nameMatch || rollMatch;
+            }).toList();
     });
   }
 
@@ -61,21 +85,7 @@ class _MarkAttendancePageState extends State<MarkAttendancePage> {
     setState(() {
       isPresent ? _presentIds.remove(s.id) : _presentIds.add(s.id);
     });
-    try {
-      if (isPresent) {
-        await _service.markAbsent(s.id, _selectedDate);
-      } else {
-        await _service.markPresent(s.id, _selectedDate);
-      }
-    } catch (e) {
-      setState(() {
-        isPresent ? _presentIds.add(s.id) : _presentIds.remove(s.id);
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Failed to update: $e')));
-      }
-    }
+    await _store.setPresent(s.id, _selectedDate, !isPresent);
   }
 
   List<DateTime> get _dateRange {
@@ -117,7 +127,7 @@ class _MarkAttendancePageState extends State<MarkAttendancePage> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Search student name',
+                hintText: 'Search name or roll number',
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 isDense: true,
@@ -136,6 +146,9 @@ class _MarkAttendancePageState extends State<MarkAttendancePage> {
                           final present = _presentIds.contains(s.id);
                           return ListTile(
                             title: Text(s.name),
+                            subtitle: s.rollNumber != null && s.rollNumber!.isNotEmpty
+                                ? Text(s.rollNumber!)
+                                : null,
                             trailing: FilledButton.tonalIcon(
                               onPressed: () => _toggle(s),
                               icon: Icon(present ? Icons.check_circle : Icons.circle_outlined),
